@@ -52,3 +52,5 @@ JSON format containing:
 - Duration
 - Heart rate data
 - Exercise categorization
+
+
