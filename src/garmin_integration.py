@@ -42,6 +42,7 @@ class GarminDataLoader:
         """Get exercise sets for a specific activity"""
         try:
             sets = self.garmin.get_activity_exercise_sets(activity_id)
+            # return sets
             return self._process_exercise_sets(sets)
         except Exception as e:
             print(f"Error fetching exercise sets: {str(e)}")
@@ -58,6 +59,7 @@ class GarminDataLoader:
                 'name': activity.get('activityName'),
                 'type': activity.get('activityType', {}).get('typeKey'),
                 'duration': activity.get('duration'),
+                'active_duration': activity.get('movingDuration'),
                 'distance': activity.get('distance'),
                 'avg_hr': activity.get('averageHR'),
                 'max_hr': activity.get('maxHR'),
@@ -79,19 +81,19 @@ class GarminDataLoader:
         if not sets_data or 'exerciseSets' not in sets_data:
             return pd.DataFrame()
 
+        sets_data = sets_data['exerciseSets']
         processed_sets = []
-        for exercise_set in sets_data['exerciseSets']:
-            for set_data in exercise_set.get('sets', []):
-                data = {
-                    'exercise_name': exercise_set.get('exerciseName'),
-                    'exercise_category': exercise_set.get('category'),
-                    'set_number': set_data.get('setNumber'),
-                    'reps': set_data.get('repetitionCount'),
-                    'weight': set_data.get('weightValue'),
-                    'weight_unit': set_data.get('weightUnit'),
-                    'duration': set_data.get('duration')
-                }
-                processed_sets.append(data)
+        for set in sets_data:            
+            exercise_category = set['exercises'][0].get('category') if set['exercises'] else None
+            data = {
+                'exercise_category': exercise_category,
+                'duration': set.get('duration'),
+                'reps': set.get('repetitionCount'),
+                'weight': set.get('weight'),
+                'startTime': set.get('startTime'),
+                'setType': set.get('setType')
+            }
+            processed_sets.append(data)
         
         return pd.DataFrame(processed_sets)
 
